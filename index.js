@@ -111,7 +111,7 @@ bot.hears(/\выпить чаю/, async (ctx) => {
 
     user = await Tea.findOne({ auroraID: userId });
 
-    ctx.telegram.sendMessage(chatId, `🍵${userName}, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total} литров.</i>`, {
+    ctx.telegram.sendMessage(chatId, `🍵${userName}, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total.toFixed(2)} литров.</i>`, {
         parse_mode: 'HTML'
     });
 })
