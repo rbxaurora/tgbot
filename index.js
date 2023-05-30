@@ -4,6 +4,7 @@ const { Telegraf } = require(`telegraf`);
 const { message } = require(`telegraf/filters`);
 require(`dotenv`).config();
 
+const pid = process.pid();
 const port = process.env.PORT || 3001;
 
 app.listen(port, () => console.log(`Bot started!`));
@@ -14,6 +15,7 @@ mongoose.connect(process.env.BD_TOKEN);
 
 const Users = require(`./models/users`);
 const Tea = require(`./models/tea`);
+const Warns = require(`./models/warns`);
 // -----------------
 
 let time;
@@ -140,6 +142,47 @@ bot.hears(/\чайный топ/, async (ctx) => {
     });
 });
 
+bot.hears(/\варн (.+)/, async (ctx) => {
+    warn(ctx);
+})
+
+bot.hears(/\вареник (.+)/, async (ctx) => {
+    warn(ctx);
+});
+
+bot.hears(/\снять варны/, async (ctx) => {
+    if (ctx.message.reply_to_message) {
+        const chatId = ctx.message.chat.id;
+        const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
+
+        const admin = await Users.findOne({ auroraID: userId });
+
+        if (admin) {
+            await Warns.deleteOne({ auroraID: userId });
+            ctx.telegram.sendMessage(chatId, `✅Администратор <i>${ctx.message.from.first_name}</i> <b>снял все предупреждения с участника Хауса - ${userName}</b>`, {
+                parse_mode: 'HTML'
+            });
+        } else {
+            ctx.telegram.sendMessage(chatId, `❌<b>У вас нет полномочий на использование данной команды. Пожалуйста, обратитесь к администрации.</b>`, {
+                parse_mode: 'HTML'
+            });
+        }
+    }
+});
+
+bot.hears(/\изнасиловать/, (ctx) => {
+    if (ctx.message.reply_to_message) {
+        const chatId = ctx.message.chat.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
+        const ispName = ctx.message.from.first_name;
+
+        ctx.telegram.sendMessage(chatId, `🥵 | <b>${ispName}</b> жеско изнасиловал(-а) <b>${userName}</b>`, {
+            parse_mode: 'HTML'
+        });
+    }
+})
+
 bot.on(message('text'), (ctx) => {
     const chatId = ctx.message.chat.id;
     const text = ctx.message.text;
@@ -179,3 +222,53 @@ function randomTea(){
     let drink = Math.random() * 10;
     return drink.toFixed(2);
 }
+
+async function warn(ctx){
+    if (ctx.message.reply_to_message) {
+        const chatId = ctx.message.chat.id;
+        const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
+        const resp = ctx.match[1];
+
+        const admin = await Users.findOne({ auroraID: ctx.message.from.id });
+
+        if (admin) {
+            let user = await Warns.findOne({ auroraID: userId });
+
+            if (!user) {
+                const warn = new Warns({
+                    username: userName,
+                    auroraID: userId,
+                    total: 1
+                });
+
+                await warn.save();
+            } else {
+                await Warns.updateOne({ auroraID: userId }, { $inc: { total: 1 } });
+            }
+
+            user = await Warns.findOne({ auroraID: userId });
+
+            if (user.total <= 5) {
+                ctx.telegram.sendMessage(chatId, `❗Участник <i>${userName}</i> [${userId}] <b>получил ${user.total}</b> предупреждение из 6.\nВыдано администратором Хауса ${ctx.message.from.first_name}\n\n<i>Причина: ${resp}</i>`, {
+                    parse_mode: 'HTML'
+                });
+            } else if (user.total = 6) {
+                ctx.telegram.banChatMember(chatId, userId);
+                ctx.telegram.sendMessage(chatId, `⛔Участник <i>${userName}</i> [${userId}] <b>был исключен из Хауса с последующим занесением в Черный список администратором ${ctx.message.from.first_name}</b>\n\n<i>Причина: Превышено количество предупреждений</i>`, {
+                    parse_mode: 'HTML'
+                });
+
+                await Warns.deleteOne({ auroraId: userId });
+            }
+        } else {
+            ctx.telegram.sendMessage(chatId, `❌<b>У вас нет полномочий на использование данной команды. Пожалуйста, обратитесь к администрации.</b>`, {
+                parse_mode: 'HTML'
+            });
+        }
+    }
+}
+
+app.get(`/`, (req, res) => {
+    res.send(`Bot launched successfully. PID: ${pid}`);
+});
