@@ -38,7 +38,7 @@ bot.hears(/\мут (.+)/, async (ctx) => {
 
         const admin = Users.findOne({ auroraID: ctx.message.from.id });
 
-        if (admin) {
+        if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
             if (time) {
                 ctx.telegram.sendMessage(chatId, `Участник <i>${userName}</i> [${userId}] <b>был обеззвучен 🔇 на ${time / 60000} минут администратором Хауса ${ctx.message.from.first_name}</b>. \n\n<i>Причина: ${textMessage}</i>`, {
                     parse_mode: 'HTML'
@@ -69,7 +69,7 @@ bot.hears(/\размут/, async (ctx) => {
 
         const admin = await Users.findOne({ auroraID: ctx.message.from.id });
 
-        if (admin) {
+        if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
             ctx.telegram.sendMessage(chatId, `✅Участник <i>${userName}</i> [${userId}] <b>получил право говорить в беседе.</b>\n\n<i>Пожалуйста, впредь не нарушайте правила Хауса😉</i>`, {
                 parse_mode: 'HTML'
             });
@@ -98,6 +98,7 @@ bot.hears(/\выпить чаю/, async (ctx) => {
     const chatId = ctx.message.chat.id;
     const userId = ctx.message.from.id;
     const userName = ctx.message.from.first_name;
+    const thisTime = Math.floor(Date.now() / 1000);
 
     const drank = randomTea();
 
@@ -107,20 +108,52 @@ bot.hears(/\выпить чаю/, async (ctx) => {
         const tea = new Tea({
             username: userName,
             auroraID: userId,
+            attempt: 1,
+            untilDate: 0,
             total: drank
         });
 
         await tea.save();
     } else {
-        await Tea.updateOne({ auroraID: userId }, { $set: { username: userName } });
-        await Tea.updateOne({ auroraID: userId }, { $inc: { total: drank } });
+        if (user.attempt < 3 && thisTime >= user.untilDate) {
+            await Tea.updateOne({ auroraID: userId }, { $set: { username: userName, untilDate: 0 } });
+            await Tea.updateOne({ auroraID: userId }, { $inc: { total: drank, attempt: 1 } });
+
+            user = await Tea.findOne({ auroraID: userId });
+        
+            ctx.telegram.sendMessage(chatId, `🍵${userName}, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total.toFixed(2)} литров.</i>`, {
+                parse_mode: 'HTML'
+            });
+        } else if (user.attempt == 3) {
+            const untilDate = Math.floor((Date.now() + 7200000) / 1000);
+
+            await Tea.updateOne({ auroraID: userId }, { $set: { untilDate: untilDate, attempt: 0 } });
+
+            let until = untilDate - thisTime;
+            let hours = Math.floor(until / 3600);
+            let minutes = Math.round(until / 120);
+
+            ctx.telegram.sendMessage(chatId, `<b>❗Вы исчерпали свой лимит глотков чая.</b>\nСледующий глоток можно будет сделать через ${hours} часа 00 минут`, {
+                parse_mode: 'HTML'
+            }); 
+
+        } else if (user.untilDate > 0) {
+            let until = user.untilDate - thisTime;
+            let hours = Math.floor(until / 3600);
+            let minutes = Math.round(until / 120);
+
+            if (hours == 1) {
+                ctx.telegram.sendMessage(chatId, `<b>❗Вы исчерпали свой лимит глотков чая.</b>\nСледующий глоток можно будет сделать через ${hours} час ${minutes} минут`, {
+                    parse_mode: 'HTML'
+                });
+            } else if (hours == 0) {
+                ctx.telegram.sendMessage(chatId, `<b>❗Вы исчерпали свой лимит глотков чая.</b>\nСледующий глоток можно будет сделать через ${minutes} минут`, {
+                    parse_mode: 'HTML'
+                });
+            } 
+        }
     }
 
-    user = await Tea.findOne({ auroraID: userId });
-
-    ctx.telegram.sendMessage(chatId, `🍵${userName}, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total.toFixed(2)} литров.</i>`, {
-        parse_mode: 'HTML'
-    });
 });
 
 bot.hears(/\чайный топ/, async (ctx) => {
@@ -231,7 +264,7 @@ async function warn(ctx){
 
         const admin = await Users.findOne({ auroraID: ctx.message.from.id });
 
-        if (admin) {
+        if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
             let user = await Warns.findOne({ auroraID: userId });
 
             if (!user) {

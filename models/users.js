@@ -8,7 +8,8 @@ const usersSchema = new Schema({
         required: true,
         unique: true
     },
-    isAdmin: Boolean
+    isAdmin: Boolean,
+    role: String
 });
 
 const Users = mongoose.model(`users`, usersSchema);

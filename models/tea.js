@@ -11,6 +11,8 @@ const teaSchema = new Schema({
         required: true,
         unique: true
     },
+    attempt: Number,
+    untilDate: Number,
     total: Number
 }, { timestamps: true });
 
