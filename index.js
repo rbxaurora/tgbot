@@ -1,10 +1,9 @@
-const express = require(`express`);
+﻿const express = require(`express`);
 const app = express();
 const { Telegraf } = require(`telegraf`);
 const { message } = require(`telegraf/filters`);
 require(`dotenv`).config();
 
-const pid = process.pid();
 const port = process.env.PORT || 3001;
 
 app.listen(port, () => console.log(`Bot started!`));
@@ -270,5 +269,5 @@ async function warn(ctx){
 }
 
 app.get(`/`, (req, res) => {
-    res.send(`Bot launched successfully. PID: ${pid}`);
+    res.send(`Bot launched successfully.`);
 });
