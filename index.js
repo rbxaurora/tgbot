@@ -124,19 +124,21 @@ bot.hears(/\выпить чаю/, async (ctx) => {
             ctx.telegram.sendMessage(chatId, `🍵${userName}, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total.toFixed(2)} литров.</i>`, {
                 parse_mode: 'HTML'
             });
-        } else if (user.attempt == 3) {
-            const untilDate = Math.floor((Date.now() + 7200000) / 1000);
 
-            await Tea.updateOne({ auroraID: userId }, { $set: { untilDate: untilDate, attempt: 0 } });
+            if (user.attempt == 3) {
+                const untilDate = Math.floor((Date.now() + 7200000) / 1000);
 
-            let until = untilDate - thisTime;
-            let hours = Math.floor(until / 3600);
-            let minutes = Math.round(until / 120);
+                await Tea.updateOne({ auroraID: userId }, { $set: { untilDate: untilDate, attempt: 0 } });
 
-            ctx.telegram.sendMessage(chatId, `<b>❗Вы исчерпали свой лимит глотков чая.</b>\nСледующий глоток можно будет сделать через ${hours} часа 00 минут`, {
-                parse_mode: 'HTML'
-            }); 
+                let until = untilDate - thisTime;
+                let hours = Math.floor(until / 3600);
+                let minutes = Math.round(until / 120);
 
+                ctx.telegram.sendMessage(chatId, `<b>❗Вы исчерпали свой лимит глотков чая.</b>\nСледующий глоток можно будет сделать через ${hours} часа 00 минут`, {
+                    parse_mode: 'HTML'
+                }); 
+
+            }
         } else if (user.untilDate > 0) {
             let until = user.untilDate - thisTime;
             let hours = Math.floor(until / 3600);
@@ -203,17 +205,43 @@ bot.hears(/\снять варны/, async (ctx) => {
     }
 });
 
-bot.hears(/\изнасиловать/, (ctx) => {
+bot.hears(/\/send/, (ctx) => {
+    if (ctx.message.reply_to_message && ctx.message.text == `/send`) {
+        const chatId = -1001482254693;
+        const resp = ctx.message.reply_to_message.text;
+        
+        ctx.telegram.sendMessage(chatId, resp);
+    }
+});
+
+bot.hears(/\бан (.+)/, async (ctx) => {
     if (ctx.message.reply_to_message) {
         const chatId = ctx.message.chat.id;
+        const userId = ctx.message.reply_to_message.from.id;
         const userName = ctx.message.reply_to_message.from.first_name;
-        const ispName = ctx.message.from.first_name;
+        const resp = ctx.match[1];
 
-        ctx.telegram.sendMessage(chatId, `🥵 | <b>${ispName}</b> жеско изнасиловал(-а) <b>${userName}</b>`, {
-            parse_mode: 'HTML'
-        });
+        const admin = await Users.findOne({ auroraID: ctx.message.from.id });
+
+        if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
+            if (userId != admin.auroraID) {
+                ctx.telegram.banChatMember(chatId, userId);
+
+                ctx.telegram.sendMessage(chatId, `⛔Участник <i>${userName}</i> [${userId}] <b>был исключен с последующим занесением в Черный список Хауса.</b>\nВыдано администратором Хауса - ${ctx.message.from.first_name}\n\n<i>Причина: ${resp}</i>`, {
+                    parse_mode: 'HTML'
+                });
+            } else {
+                ctx.telegram.sendMessage(chatId, `<b>❌Вы не можете исключить пользователя, состоящего в Администрации чата. Пожалуйста, обратитесь к Создателю Хауса.</b>`, {
+                    parse_mode: 'HTML'
+                })
+            }
+        } else {
+            ctx.telegram.sendMessage(chatId, `❌<b>У вас нет полномочий на использование данной команды. Пожалуйста, обратитесь к администрации.</b>`, {
+                parse_mode: 'HTML'
+            });
+        }
     }
-})
+});
 
 bot.on(message('text'), (ctx) => {
     const chatId = ctx.message.chat.id;
