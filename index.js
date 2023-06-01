@@ -19,6 +19,7 @@ const Warns = require(`./models/warns`);
 
 let time;
 let textMessage;
+let msgId;
 
 // Bot settings
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -205,12 +206,20 @@ bot.hears(/\снять варны/, async (ctx) => {
     }
 });
 
-bot.hears(/\/send/, (ctx) => {
+bot.hears(/\/send/, async (ctx) => {
     if (ctx.message.reply_to_message && ctx.message.text == `/send`) {
         const chatId = -1001482254693;
         const resp = ctx.message.reply_to_message.text;
-        
-        ctx.telegram.sendMessage(chatId, resp);
+
+        const admin = await Users.findOne({ auroraID: ctx.message.from.id });
+
+        if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
+            ctx.telegram.sendMessage(chatId, resp);
+        } else {
+            ctx.telegram.sendMessage(chatId, `❌<b>У вас нет полномочий на использование данной команды. Пожалуйста, обратитесь к администрации.</b>`, {
+                parse_mode: 'HTML'
+            });
+        }
     }
 });
 
@@ -243,9 +252,29 @@ bot.hears(/\бан (.+)/, async (ctx) => {
     }
 });
 
+bot.hears(/\/pin/, async (ctx) => {
+    if (ctx.message.reply_to_message) {
+        const chatId = -1001482254693;
+        const text = ctx.message.reply_to_message.text;
+
+        const messageId = msgId + 1;
+
+        const admin = await Users.findOne({ auroraID: ctx.message.from.id});
+
+        if (admin && admin.role == `owner`) {
+            ctx.telegram.sendMessage(chatId, text);
+            ctx.telegram.pinChatMessage(chatId, messageId);
+        }
+    }
+});
+
 bot.on(message('text'), (ctx) => {
     const chatId = ctx.message.chat.id;
     const text = ctx.message.text;
+    
+    if (chatId == -1001482254693) {
+        msgId = ctx.message.message_id;
+    }
 
     if (text == `бот` || text == `Бот`) {
         ctx.telegram.sendMessage(chatId, `✅Бот на месте!`)
