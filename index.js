@@ -28,7 +28,7 @@ bot.start((ctx) => {
     ctx.reply(`Bot started!`);
 });
 
-bot.hears(/\мут (.+)/, async (ctx) => {
+bot.hears(/\.мут (.+)/, async (ctx) => {
     if (ctx.message.reply_to_message) {
         const chatId = ctx.message.chat.id;
         const userId = ctx.message.reply_to_message.from.id;
@@ -62,7 +62,7 @@ bot.hears(/\мут (.+)/, async (ctx) => {
     }
 });
 
-bot.hears(/\размут/, async (ctx) => {
+bot.hears(/\.размут/, async (ctx) => {
     if (ctx.message.reply_to_message) {
         const chatId = ctx.message.chat.id;
         const userId = ctx.message.reply_to_message.from.id;
@@ -177,15 +177,15 @@ bot.hears(/\чайный топ/, async (ctx) => {
     });
 });
 
-bot.hears(/\варн (.+)/, async (ctx) => {
+bot.hears(/\.варн (.+)/, async (ctx) => {
     warn(ctx);
 })
 
-bot.hears(/\вареник (.+)/, async (ctx) => {
+bot.hears(/\.вареник (.+)/, async (ctx) => {
     warn(ctx);
 });
 
-bot.hears(/\снять варны/, async (ctx) => {
+bot.hears(/\.снять варны/, async (ctx) => {
     if (ctx.message.reply_to_message) {
         const chatId = ctx.message.chat.id;
         const userId = ctx.message.reply_to_message.from.id;
@@ -223,7 +223,7 @@ bot.hears(/\/send/, async (ctx) => {
     }
 });
 
-bot.hears(/\бан (.+)/, async (ctx) => {
+bot.hears(/\.бан (.+)/, async (ctx) => {
     if (ctx.message.reply_to_message) {
         const chatId = ctx.message.chat.id;
         const userId = ctx.message.reply_to_message.from.id;
@@ -264,6 +264,26 @@ bot.hears(/\/pin/, async (ctx) => {
         if (admin && admin.role == `owner`) {
             ctx.telegram.sendMessage(chatId, text);
             ctx.telegram.pinChatMessage(chatId, messageId);
+        }
+    }
+});
+
+bot.hears(/\.закрепб/, async (ctx) => {
+    if (ctx.message.reply_to_message) {
+        const chatId = -1001482254693;
+        const text = ctx.message.reply_to_message.text;
+
+        const messageId = ctx.message.reply_to_message.message_id;
+        const admin = await Users.findOne({ auroraID: ctx.message.from.id });
+
+        if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
+            ctx.telegram.pinChatMessage(chatId, messageId, {
+                disable_notification: true
+            });
+        } else {
+            ctx.telegram.sendMessage(chatId, `❌<b>У вас нет полномочий на использование данной команды. Пожалуйста, обратитесь к администрации.</b>`, {
+                parse_mode: 'HTML'
+            });
         }
     }
 });
