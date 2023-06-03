@@ -22,7 +22,7 @@ let textMessage;
 let msgId;
 
 // Bot settings
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf(process.env.TEST_TOKEN);
 
 bot.start((ctx) => {
     ctx.reply(`Bot started!`);
@@ -286,6 +286,35 @@ bot.hears(/\.закрепб/, async (ctx) => {
             });
         }
     }
+});
+
+bot.on('new_chat_member', async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const userId = ctx.message.new_chat_members[0].id;
+    const userName = ctx.message.new_chat_members[0].first_name;
+    const chat = await ctx.telegram.getChat(chatId);
+
+    ctx.telegram.sendMessage(chatId, `<b>Привет, <a href="tg://user?id=${userId}">${userName}</a>, добро пожаловать в ${chat.title}</b>\n\nДобро пожаловать в нашу команду!\nПожалуйста, ознакомься с правилами нашего Хауса. Со всеми вопросами ты всегда можешь обратиться к нашим многоуважаемым администраторам. \n\n<i>Надеемся, что тебе тут будет комфортно и весело❤</i>`, {
+        reply_markup: {
+            inline_keyboard: [
+                [{
+                    text: "ℹПравила Хауса",
+                    url: "https://rbxaurora.github.io/for-members/rules.html"
+                }]
+            ]
+        },
+        parse_mode: 'HTML'
+    });
+});
+
+bot.on('left_chat_member', async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const userId = ctx.message.left_chat_member.id;
+    const userName = ctx.message.left_chat_member.first_name;
+
+    ctx.telegram.sendMessage(chatId, `🙅🏿<a href="tg://user?id=${userId}">${userName}</a> покинул(-а) чат`, {
+        parse_mode: 'HTML'
+    });
 });
 
 bot.on(message('text'), (ctx) => {
