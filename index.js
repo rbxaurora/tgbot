@@ -122,7 +122,7 @@ bot.hears(/\выпить чаю/, async (ctx) => {
 
             user = await Tea.findOne({ auroraID: userId });
         
-            ctx.telegram.sendMessage(chatId, `🍵${userName}, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total.toFixed(2)} литров.</i>`, {
+            ctx.telegram.sendMessage(chatId, `🍵<a href="tg://user?id=${userId}">${userName}</a>, <b>ты выпил(-а) ${drank} литров чая</b>.\n\n<i>Выпито всего - ${user.total.toFixed(2)} литров.</i>`, {
                 parse_mode: 'HTML'
             });
 
@@ -168,7 +168,7 @@ bot.hears(/\чайный топ/, async (ctx) => {
     for (let i = 0; i < teas.length; i++) {
         const tea = teas[i];
         total = total + Number(tea.total.toFixed(2));
-        top += `\n${i+1}. <b>${tea.username}</b> - ${tea.total.toFixed(2)} литров`;
+        top += `\n${i+1}. ${tea.username} - ${tea.total.toFixed(2)} литров`;
     }
     top += `\n\n<i>Всего литров выпито - ${total.toFixed(2)}</i>`;
 
@@ -288,19 +288,57 @@ bot.hears(/\.закрепб/, async (ctx) => {
     }
 });
 
+bot.on('new_chat_member', async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const userId = ctx.message.new_chat_members[0].id;
+    const userName = ctx.message.new_chat_members[0].first_name;
+    const chat = await ctx.telegram.getChat(chatId);
+  
+    ctx.telegram.sendMessage(
+      chatId,
+      `<b>Привет, <a href=tg://user?id=${userId}>${userName}</a>, добро пожаловать в ${chat.title}</b>\n\nДобро пожаловать в нашу команду!\nПожалуйста, ознакомься с правилами нашего Хауса. Со всеми вопросами ты всегда можешь обратиться к нашим многоуважаемым администраторам. \n\n<i>Надеемся, что тебе тут будет комфортно и весело❤</i>`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "ℹПравила Хауса",
+                url: "https://rbxaurora.github.io/for-members/rules.html"
+              },
+            ],
+          ],
+        },
+        parse_mode: 'HTML',
+      }
+    );
+});
+  
+bot.on('left_chat_member', async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const userId = ctx.message.left_chat_member.id;
+    const userName = ctx.message.left_chat_member.first_name;
+  
+    ctx.telegram.sendMessage(
+      chatId,
+      `🙅🏿‍♂️ <a href="tg://user?id=${userId}">${userName}</a> покинул(-а) чат.`,
+      {
+        parse_mode: 'HTML',
+      }
+    );
+});
+
 bot.on(message('text'), (ctx) => {
     const chatId = ctx.message.chat.id;
-    const text = ctx.message.text;
+    const text = ctx.message.text.toLowerCase();
     
     if (chatId == -1001482254693) {
         msgId = ctx.message.message_id;
     }
 
-    if (text == `бот` || text == `Бот`) {
+    if (text == `бот`) {
         ctx.telegram.sendMessage(chatId, `✅Бот на месте!`)
     }
 });
-
 
 bot.launch();
 // ---------------------
