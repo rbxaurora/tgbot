@@ -196,7 +196,7 @@ bot.on('callback_query', async (ctx) => {
                 parse_mode: 'HTML'
             });
 
-            const blank = new Black({
+            const black = new Black({
                 userId: anketaId,
                 reason: `Некорректно заполненная анкета`
             });
@@ -233,7 +233,7 @@ bot.on('callback_query', async (ctx) => {
                 parse_mode: 'HTML'
             });
 
-            const blank = new Black({
+            const black = new Black({
                 userId: anketaId,
                 reason: `Черный список Хауса`
             });
