@@ -313,7 +313,7 @@ bot.command('staff', async (ctx) => {
     const ownerRole = await ctx.telegram.getChatMember(chatId, owner.auroraID);
     const deputyRole = await ctx.telegram.getChatMember(chatId, deputies[0].auroraID);
 
-    adminList += `👑<b>Создатель Хауса</b>\n└ ${owner.name} » <i>${ownerRole.custom_title}</i>\n\n👮⚜<b>Заместители</b>\n└ ${deputies[0].name} » <i>${deputyRole.custom_title}</i>\n\n👮‍♂️<b>Следящий Хауса</b>\n└ ${spectator.name}`;
+    adminList += `👑<b>Создатель Хауса</b>\n└ ${owner.name} » <i>${ownerRole.custom_title}</i>\n\n👮⚜<b>Заместители</b>\n└ ${deputies[0].name} » <i>${deputyRole.custom_title}</i>\n└ ${deputies[1].name} » <i>${deputyRole.custom_title}</i>\n\n👮‍♂️<b>Следящий Хауса</b>\n└ ${spectator.name}`;
 
     ctx.telegram.sendMessage(chatId, adminList, {
         parse_mode: 'HTML'
