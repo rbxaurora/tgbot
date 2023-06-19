@@ -288,29 +288,63 @@ bot.hears(/\.закрепб/, async (ctx) => {
     }
 });
 
+bot.command('staff', async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const admins = await Users.find({});
+
+    let owner;
+    let deputies = [];
+    let spectator;
+
+    let adminList = `<b>АДМИНИСТРАЦИЯ ХАУСА</b>\n\n`;
+
+    for (let i = 0; i < admins.length; i++) {
+        let admin = admins[i];
+
+        if (admin.role == `owner`) {
+            owner = admin;
+        } else if (admin.role == `deputy`) {
+            deputies.push(admin);
+        } else if (admin.role == `spectator`) {
+            spectator = admin;
+        }
+    }
+
+    const ownerRole = await ctx.telegram.getChatMember(chatId, owner.auroraID);
+    const deputyRole = await ctx.telegram.getChatMember(chatId, deputies[0].auroraID);
+
+    adminList += `👑<b>Создатель Хауса</b>\n└ ${owner.name} » <i>${ownerRole.custom_title}</i>\n\n👮⚜Заместители\n└ ${deputies[0].name} » <i>${deputyRole.custom_title}</i>\n\n👮‍♂️Следящий Хауса\n└ ${spectator.name}`;
+
+    ctx.telegram.sendMessage(chatId, adminList, {
+        parse_mode: 'HTML'
+    });
+});
+
 bot.on('new_chat_member', async (ctx) => {
     const chatId = ctx.message.chat.id;
     const userId = ctx.message.new_chat_members[0].id;
     const userName = ctx.message.new_chat_members[0].first_name;
     const chat = await ctx.telegram.getChat(chatId);
   
-    ctx.telegram.sendMessage(
-      chatId,
-      `<b>Привет, <a href=tg://user?id=${userId}>${userName}</a>, добро пожаловать в ${chat.title}</b>\n\nДобро пожаловать в нашу команду!\nПожалуйста, ознакомься с правилами нашего Хауса. Со всеми вопросами ты всегда можешь обратиться к нашим многоуважаемым администраторам. \n\n<i>Надеемся, что тебе тут будет комфортно и весело❤</i>`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "ℹПравила Хауса",
-                url: "https://rbxaurora.github.io/for-members/rules.html"
+    if (!ctx.message.new_chat_members[0].is_bot) {
+        ctx.telegram.sendMessage(
+            chatId,
+            `<b>Привет, <a href="tg://user?id=${userId}">${userName}</a>, добро пожаловать в ${chat.title}</b>\n\nДобро пожаловать в нашу команду!\nПожалуйста, ознакомься с правилами нашего Хауса. Со всеми вопросами ты всегда можешь обратиться к нашим многоуважаемым администраторам. \n\n<i>Надеемся, что тебе тут будет комфортно и весело❤</i>`,
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "ℹПравила Хауса",
+                      url: "https://rbxaurora.github.io/for-members/rules.html"
+                    },
+                  ],
+                ],
               },
-            ],
-          ],
-        },
-        parse_mode: 'HTML',
-      }
-    );
+              parse_mode: 'HTML'
+            }
+          );
+    }
 });
   
 bot.on('left_chat_member', async (ctx) => {
