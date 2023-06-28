@@ -22,7 +22,7 @@ let textMessage;
 let msgId;
 
 // Bot settings
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf(process.env.TEST_TOKEN);
 
 bot.start((ctx) => {
     ctx.reply(`Bot started!`);
@@ -37,7 +37,7 @@ bot.hears(/\.мут (.+)/, async (ctx) => {
         minToUnix(resp);
         const untilDate = Math.floor((Date.now() + time) / 1000);
 
-        const admin = Users.findOne({ auroraID: ctx.message.from.id });
+        const admin = await Users.findOne({ auroraID: ctx.message.from.id });
 
         if (admin && (admin.role == `owner` || admin.role == `deputy`)) {
             if (time) {
