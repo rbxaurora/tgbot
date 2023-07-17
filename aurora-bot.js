@@ -25,7 +25,7 @@ let textMessage;
 let msgId;
 
 // Bot settings
-const bot = new Telegraf(process.env.TEST_TOKEN);
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.start((ctx) => {
     ctx.reply(`Bot started!`);
