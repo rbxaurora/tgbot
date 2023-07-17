@@ -12,6 +12,7 @@ class controller {
             try {
                 setTimeout(() => {
                     delmess = null;
+                    await Delmess.deleteMany();
                     this.msgDeleted(ctx, chatId, channelName);
                 }, 1200);
             } catch (e) {
