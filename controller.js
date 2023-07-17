@@ -12,7 +12,6 @@ class controller {
             try {
                 setTimeout(() => {
                     delmess = null;
-                    await Delmess.deleteMany();
                     this.msgDeleted(ctx, chatId, channelName);
                 }, 1200);
             } catch (e) {
@@ -21,11 +20,12 @@ class controller {
         } 
     }
 
-    msgDeleted (ctx, chatId, channelName) {
+    async msgDeleted (ctx, chatId, channelName) {
         if (!delmess && counter != 0) {
             ctx.telegram.sendMessage(chatId, `<b>❌Сообщения из телеграм-канала ${channelName} запрещены в данном чате по правилам Хауса.</b>\n\n<i>Сообщение было удалено.</i>`, {
                 parse_mode: 'HTML'
             });
+            await Delmess.deleteMany();
             counter--;
         }
     }
