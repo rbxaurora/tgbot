@@ -15,6 +15,9 @@ mongoose.connect(process.env.BD_TOKEN);
 const Users = require(`./models/users`);
 const Tea = require(`./models/tea`);
 const Warns = require(`./models/warns`);
+const Delmess = require('./models/delmess');
+
+const controller = require('./controller');
 // -----------------
 
 let time;
@@ -371,6 +374,46 @@ bot.on(message('text'), (ctx) => {
 
     if (text == `бот`) {
         ctx.telegram.sendMessage(chatId, `✅Бот на месте!`)
+    }
+});
+
+bot.on(message('photo'), async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const msgId = ctx.message.message_id;
+    const userId = ctx.message.from.id;
+    const channelName = ctx.message.forward_from_chat?.title;
+
+    if (channelName.includes('Топор') || channelName.includes('Труха')) {
+        const admin = await Users.findOne({ auroraID: userId });
+
+        if (!admin) {
+            const delmess = new Delmess({
+                msgId: msgId
+            });
+
+            await delmess.save();
+            await controller.delmsg(ctx, chatId, msgId, channelName);
+        }
+    }
+});
+
+bot.on(message('video'), async (ctx) => {
+    const chatId = ctx.message.chat.id;
+    const msgId = ctx.message.message_id;
+    const userId = ctx.message.from.id;
+    const channelName = ctx.message.forward_from_chat?.title;
+
+    if (channelName.includes('Топор') || channelName.includes('Труха')) {
+        const admin = await Users.findOne({ auroraID: userId });
+
+        if (!admin) {
+            const delmess = new Delmess({
+                msgId: msgId
+            });
+
+            await delmess.save();
+            await controller.delmsg(ctx, chatId, msgId, channelName);
+        }
     }
 });
 
